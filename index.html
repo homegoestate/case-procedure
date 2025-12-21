@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宏國地政 | 易丞地政 - 旗艦戰略系統 v9.0</title>
+    <title>宏國地政 | 易丞地政 - 旗艦戰略系統 v10.0</title>
     <style>
         :root { --primary: #2c3e50; --accent: #c0392b; --land: #d35400; --house: #27ae60; --info: #2980b9; --bg: #f8f9fa; }
         
@@ -17,7 +17,7 @@
             -moz-user-select: none;
         }
         
-        /* 浮水印 (動態生成) */
+        /* 浮水印 */
         .watermark { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; display: flex; justify-content: center; align-items: center; opacity: 0.08; overflow: hidden; }
         .watermark-text { font-size: 60px; font-weight: bold; color: #000; transform: rotate(-30deg); text-align: center; line-height: 1.5; }
 
@@ -62,17 +62,14 @@
         .task-item { margin: 4px 0; display: flex; align-items: flex-start; line-height: 1.4; justify-content: space-between; font-size: 0.95em; cursor: pointer; }
         .task-content { display: flex; align-items: center; width: 100%; }
         
-        /* 可勾選框框 */
         .task-checkbox { margin-top: 2px; margin-right: 8px; min-width: 16px; height: 16px; border: 2px solid #bdc3c7; border-radius: 3px; display: flex; align-items: center; justify-content: center; background: white; transition: 0.2s; }
         .task-item.checked .task-checkbox { background: var(--house); border-color: var(--house); }
         .task-item.checked .task-checkbox::after { content: '✔'; color: white; font-size: 12px; }
         .task-item.checked { color: #555; }
         
-        /* 資訊按鈕 (應備文件) */
         .info-btn { background: var(--info); color: white; border: none; border-radius: 15px; padding: 2px 8px; font-size: 0.75em; cursor: pointer; margin-left: auto; opacity: 0.9; display: flex; align-items: center; gap: 3px; }
         .info-btn:hover { opacity: 1; background: #1f618d; }
 
-        /* 計算機區塊 */
         .calc-box { background: #e3f2fd; border: 1px solid #90caf9; padding: 10px; border-radius: 6px; margin-top: 5px; font-size: 0.9em; width: 100%; box-sizing: border-box; }
         .calc-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; flex-wrap: wrap; }
         .calc-input { padding: 3px; border: 1px solid #ccc; border-radius: 3px; width: 80px; }
@@ -129,10 +126,8 @@
             .task-item { font-size: 11pt; margin: 3px 0; line-height: 1.2; font-weight: 500; }
             .task-checkbox { border-color: #000; min-width: 14px; height: 14px; }
             
-            /* 紅字警告特別加強 */
             .station.critical .station-card { border-color: #000; border-left: 8px solid #000; background: #f0f0f0; }
             
-            /* 計算機在列印時樣式 */
             .calc-box { border: 2px solid #000; background: white; padding: 5px; margin-top: 5px; }
             .calc-row button { display: none; }
             .calc-result { border-top: none; margin-top: 0; padding-top: 0; color: #000; font-size: 12pt; }
@@ -142,12 +137,13 @@
             .closing-box { font-size: 9pt; padding: 4px; border: 1px solid #000; min-width: 0; background: none; }
             .closing-title { background: #ddd; color: #000; border-bottom: 1px solid #000; }
             
-            /* 法律宣告 */
             .legal-footer { display: block; text-align: center; font-size: 8pt; margin-top: 10px; border-top: 1px solid #000; padding-top: 2px; font-weight: bold; }
         }
     </style>
 </head>
-<body oncontextmenu="return false;"> <div class="watermark"><div class="watermark-text" id="wmText"></div></div>
+<body oncontextmenu="return false;">
+
+<div class="watermark"><div class="watermark-text" id="wmText"></div></div>
 
 <div id="myModal" class="modal">
   <div class="modal-content">
@@ -166,7 +162,7 @@
 <div class="container">
     <div class="brand-header">
         <h1>宏國地政 | 易丞地政</h1>
-        <div class="sub-title">案件標準作業戰略地圖 v9.0</div>
+        <div class="sub-title">案件標準作業戰略地圖 v10.0</div>
     </div>
 
     <div class="config-zone">
@@ -196,7 +192,7 @@
         </div>
         <div class="btn-group">
             <button class="action-btn btn-generate" onclick="generateMap()">📍 生成戰略路徑</button>
-            <button class="action-btn btn-print" onclick="window.print()">🖨️ 列印 (滿版大字體)</button>
+            <button class="action-btn btn-print" onclick="printToPdf()">🖨️ 列印 / 另存 PDF</button>
         </div>
     </div>
 
@@ -205,18 +201,22 @@
 </div>
 
 <script>
-    // IP 保護腳本
+    // IP 保護
     document.addEventListener('keydown', function(e) {
-        // 禁止 F12, Ctrl+U (檢視原始碼), Ctrl+S (存檔)
         if (e.key === 'F12' || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.key === 's')) {
             e.preventDefault();
             alert('⚠️ 系統警告：此為公司內部機密系統，禁止檢視源碼或另存。');
         }
     });
 
-    // 動態浮水印 (加入日期)
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('wmText').innerHTML = `宏國地政 | 易丞地政<br>CONFIDENTIAL<br>${today}`;
+
+    // PDF 引導
+    function printToPdf() {
+        alert("💡 系統提示：\n\n若要存檔為 PDF，請在跳出的列印視窗中，\n將【目的地】選擇為【另存為 PDF】即可。");
+        window.print();
+    }
 
     // 資料庫
     const taskDB = {
@@ -303,7 +303,7 @@
 
         let steps = [];
 
-        // Phase 1: 簽約
+        // Phase 1
         steps.push({
             title: "Phase 1: 簽約與前置檢核",
             content: `
@@ -311,7 +311,7 @@
                 <div class="task-item" onclick="toggleCheck(this)"><div class="task-content"><span class="task-checkbox"></span>確認買賣雙方身分證、印章、權狀正本</div></div>`
         });
 
-        // Phase 2: 稅務查核
+        // Phase 2
         let phase2Content = `<div class="task-item" onclick="toggleCheck(this)"><div class="task-content"><span class="task-checkbox"></span>申請<strong>財產清單</strong> & 稅籍 <button class="info-btn" onclick="event.stopPropagation();showDocs('tax_registry')">ℹ️ SOP</button></div></div>`;
         if (propType === 'house') {
             phase2Content += `<div class="task-item" onclick="toggleCheck(this)"><div class="task-content"><span class="task-checkbox"></span>申請稅單 (<strong>分算稅金用</strong>) <button class="info-btn" onclick="event.stopPropagation();showDocs('tax_bill')">ℹ️ SOP</button></div></div>`;
@@ -321,7 +321,7 @@
         }
         steps.push({ title: "Phase 2: 現況與稅務", content: phase2Content });
 
-        // Phase 2.5: 私設
+        // Phase 2.5
         if (isPrivate) {
             steps.push({
                 title: "⚠️ Phase 2.5: 私人設定拆彈",
@@ -331,7 +331,7 @@
             });
         }
 
-        // Phase 3: 報稅與完稅 (計算機移至此)
+        // Phase 3
         steps.push({
             title: "Phase 3: 報稅與完稅",
             content: `<div class="task-item" onclick="toggleCheck(this)"><div class="task-content"><span class="task-checkbox"></span>申報增值稅 / 契稅</div></div>
@@ -344,11 +344,10 @@
                       <div class="task-item" onclick="toggleCheck(this)"><div class="task-content"><span class="task-checkbox"></span>確認完稅款入帳</div></div>`
         });
 
-        // Phase 4: 過戶 (修正：實價登錄位置)
+        // Phase 4
         let phase4Content = "";
         phase4Content += `<div class="task-item" onclick="toggleCheck(this)"><div class="task-content"><span class="task-checkbox"></span>送件：所有權移轉 ${buyerLoan==='yes'?'(+設定 連件)':''}</div></div>`;
         
-        // 實價登錄 (紅字警告)
         phase4Content += `
             <div class="task-item" style="border:1px solid red; padding:5px; background:#fff5f5;" onclick="toggleCheck(this)">
                 <div class="task-content" style="display:block;">
