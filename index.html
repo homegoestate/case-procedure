@@ -12,9 +12,17 @@
             font-family: "Microsoft JhengHei", "Heiti TC", sans-serif; 
             background-color: var(--bg); color: #333; margin: 0; padding: 20px; 
             -webkit-print-color-adjust: exact; 
-            user-select: none; /* 禁止反白 */
+            
+            /* 禁止選取與反白 */
+            user-select: none; 
             -webkit-user-select: none;
             -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        /* 禁止圖片與物件被拖曳 */
+        img, div, span {
+            -webkit-user-drag: none;
         }
         
         /* 浮水印 */
@@ -201,14 +209,46 @@
 </div>
 
 <script>
-    // IP 保護
+    // 🛡️ Nexus IP 保護模組 v2.0
+    // 功能：攔截檢視源碼、開發者工具、另存新檔、拖曳
+    
+    // 1. 禁止右鍵菜單 (已在 body 標籤中設定，此處雙重保險)
+    document.oncontextmenu = function() { return false; };
+
+    // 2. 鍵盤行為攔截
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'F12' || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.key === 's')) {
+        // 攔截 F12
+        if (e.key === 'F12') {
             e.preventDefault();
-            alert('⚠️ 系統警告：此為公司內部機密系統，禁止檢視源碼或另存。');
+            alert('⚠️ 系統警告：檢視源碼功能已鎖定。');
+            return;
+        }
+
+        // 攔截組合鍵 (Windows/Mac)
+        if (e.ctrlKey || e.metaKey) {
+            switch (e.key.toLowerCase()) {
+                case 'u': // Ctrl+U (檢視源碼)
+                case 's': // Ctrl+S (另存新檔)
+                case 'h': // Ctrl+H (歷史紀錄)
+                case 'a': // Ctrl+A (全選 - 視需求可開啟或關閉)
+                    e.preventDefault();
+                    // alert('⚠️ 此操作已被系統管理員停用。'); // 視需求可取消註解以免太干擾
+                    break;
+            }
+        }
+        
+        // 攔截開發者工具快捷鍵 Ctrl+Shift+I / J / C
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+            if (e.key === 'I' || e.key === 'i' || 
+                e.key === 'J' || e.key === 'j' || 
+                e.key === 'C' || e.key === 'c') {
+                e.preventDefault();
+                alert('⚠️ 系統警告：Debug 模式已鎖定。');
+            }
         }
     });
 
+    // 3. 浮水印日期設定
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('wmText').innerHTML = `宏國地政 | 易丞地政<br>CONFIDENTIAL<br>${today}`;
 
